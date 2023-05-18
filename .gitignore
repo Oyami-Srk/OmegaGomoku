@@ -1,0 +1,6 @@
+log/
+models/
+References/
+.venv
+.idea
+**/__pycache__
