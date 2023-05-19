@@ -57,7 +57,7 @@ class GomokuAI2(nn.Sequential):
 class GomokuAI3(nn.Module):
     def __init__(self, board_size=8):
         super(GomokuAI3, self).__init__()
-        out_size = [64, 256, 1024]
+        out_size = [64, 128, 256]
         self.conv1 = nn.Conv2d(2, out_size[0], kernel_size=3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm2d(out_size[0])
         self.conv2 = nn.Conv2d(out_size[0], out_size[1], kernel_size=3, stride=1, padding=1)

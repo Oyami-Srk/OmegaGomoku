@@ -1,3 +1,4 @@
+import json
 import math
 
 import numpy as np
@@ -13,6 +14,8 @@ class DQNAgent(BaseAgent):
         self.dqn = deep_q_network
         self.writer = writer
         self.model_dir = model_dir
+        if self.writer is not None:
+            self.writer.add_text("Train/Hyperparameters", text_string=str(self.dqn.hyperparameters))
 
     def act(self, state: np.ndarray, valid_moves: np.ndarray):
         return self.dqn.act(state, valid_moves)

@@ -60,7 +60,7 @@ class SelfPlayTrainer:
                         self.gui_board.draw_piece(x, y, self.env.current_player)
                         self.gui_board.info(f"AI下{x},{y} 奖励:{reward}")
 
-                if e % 500 == 0 and e != 0:
+                if e % 100 == 0 and e != 0:
                     self.agent.save(episode=e)
                 self.agent.finish(episode=e, max_episode=episodes)
             except KeyboardInterrupt:

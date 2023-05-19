@@ -15,3 +15,14 @@ class Hyperparameters:
     def __init__(self, **kwargs):
         for k in kwargs:
             self.__setattr__(k, kwargs[k])
+
+    def __str__(self) -> str:
+        r = ""
+        for k in self.__dir__():
+            if k[0] != '_':
+                r += f"{k}={str(self.__getattribute__(k))}, "
+        return r
+
+
+if __name__ == '__main__':
+    print(Hyperparameters())

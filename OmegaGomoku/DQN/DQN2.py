@@ -26,8 +26,11 @@ class DQN2(BaseDQN):
 
         self.memory_counter = 0
         self.learn_count = 0
-        self.loss = nn.MSELoss()
-        self.optimizer = optim.Adam(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
+        # self.loss = nn.MSELoss()
+        # self.optimizer = optim.Adam(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
+        self.loss = nn.SmoothL1Loss()
+        # self.optimizer = optim.AdamW(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
+        self.optimizer = optim.SGD(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
 
     def act(self, state, valid_moves: np.ndarray):
         valid_moves = valid_moves.reshape(self.action_size)
@@ -59,14 +62,13 @@ class DQN2(BaseDQN):
         self.memory_counter += 1
 
     def learn(self):
-        if self.memory_counter <= 8:
+        if self.memory_counter < self.hyperparameters.batch_size:
             return None
         if self.learn_count % self.hyperparameters.swap_model_each_iter == 0:
             self.target_model.load_state_dict(self.eval_model.state_dict())
-        if self.memory_counter > self.hyperparameters.memory_size:
-            sample_index = np.random.choice(self.hyperparameters.memory_size, size=self.hyperparameters.batch_size)
-        else:
-            sample_index = np.random.choice(self.memory_counter, size=self.hyperparameters.batch_size)
+        sample_index = np.random.choice(
+            min(self.hyperparameters.memory_size, self.memory_counter),
+            size=self.hyperparameters.batch_size)
         batch_memory = self.memory[sample_index, :]
         s = torch.from_numpy(
             batch_memory[:, 0:self.action_size * 2]

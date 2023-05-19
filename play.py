@@ -21,6 +21,7 @@ if last_episode == 0:
 if len(sys.argv) > 1:
     last_episode = int(sys.argv[1])
 
+print(f"Loading Episode: {last_episode}")
 dqn.load(last_episode, model_dir)
 agent = DQNAgent(
     deep_q_network=dqn,

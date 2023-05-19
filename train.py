@@ -11,28 +11,30 @@ from tensorboardX import SummaryWriter
 
 board_size = 4
 win_size = 3
-target_episode = 1000
+target_episode = 30000
 model_dir = "models"
-log_dir = f"log/{time.strftime('%Y-%m-%d %H-%M-%S')}"
-writer = SummaryWriter(log_dir)
-print(f"Tensorboard Log write to {log_dir}")
+
 
 hyperparameters = Hyperparameters(
     batch_size=256,
-    memory_size=20000,  # 记忆空间大小
-    learning_rate=1e-8,  # 学习率
-    gamma=0.95,  # 奖励折扣因子
+    memory_size=10000,  # 记忆空间大小
+    learning_rate=1e-6,  # 学习率
+    gamma=0.90,  # 奖励折扣因子，越高的话智能体会倾向于长期价值
     epsilon=1.0,  # 探索率，探索率越高随机探索的可能性越大
     epsilon_decay_rate=0.995,  # 探索率衰减率
     epsilon_min=0.05,  # 最小探索率
     epsilon_max=1.00,  # 最大探索率
-    epsilon_decay_rate_exp=1000,  # 探索率指数衰减参数，e = e_min + (e_max - e_min) * exp(-1.0 * episode / rate)
-    swap_model_each_iter=300,  # 每学习N次交换Target和Eval模型
-    train_epochs=64,
+    epsilon_decay_rate_exp=1500,  # 探索率指数衰减参数，越高越慢，e = e_min + (e_max - e_min) * exp(-1.0 * episode / rate)
+    swap_model_each_iter=100,  # 每学习N次交换Target和Eval模型
+    train_epochs=20,
     tau=0.005
 )
 
 if __name__ == '__main__':
+    log_dir = f"log/{time.strftime('%Y-%m-%d %H-%M-%S')}"
+    writer = SummaryWriter(log_dir)
+    print(f"Tensorboard Log write to {log_dir}")
+
     deep_q_network = DQN(
         board_size=board_size,
         win_size=win_size,
