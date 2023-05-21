@@ -4,23 +4,24 @@ import math
 import numpy as np
 
 from . import BaseAgent
-from ..DQN import DQN
+from ..DQN import BaseDQN
 from tensorboardX import SummaryWriter
+from ..Environment import Board
 
 
 class DQNAgent(BaseAgent):
 
-    def __init__(self, deep_q_network, writer: SummaryWriter | None = None, model_dir=None):
+    def __init__(self, deep_q_network: BaseDQN, writer: SummaryWriter | None = None, model_dir=None):
         self.dqn = deep_q_network
         self.writer = writer
         self.model_dir = model_dir
         if self.writer is not None:
             self.writer.add_text("Train/Hyperparameters", text_string=str(self.dqn.hyperparameters))
 
-    def act(self, state: np.ndarray, valid_moves: np.ndarray):
-        return self.dqn.act(state, valid_moves)
+    def act(self, state: Board, player):
+        return self.dqn.act(state, player)
 
-    def remember(self, state, next_state, action, reward, is_done):
+    def remember(self, state: np.ndarray, next_state: np.ndarray, action, reward, is_done):
         self.dqn.remember(state, next_state, action, reward, is_done)
 
     def learn(self, episode=None):

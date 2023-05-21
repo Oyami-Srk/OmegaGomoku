@@ -57,27 +57,33 @@ class GomokuAI2(nn.Sequential):
 class GomokuAI3(nn.Module):
     def __init__(self, board_size=8):
         super(GomokuAI3, self).__init__()
-        out_size = [64, 128, 256]
-        self.conv1 = nn.Conv2d(2, out_size[0], kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(out_size[0])
-        self.conv2 = nn.Conv2d(out_size[0], out_size[1], kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(out_size[1])
-        self.conv3 = nn.Conv2d(out_size[1], out_size[2], kernel_size=3, stride=1, padding=1)
-        self.bn3 = nn.BatchNorm2d(out_size[2])
+        # conv_setup = [2, 64, 128, 256]
+        conv_setup = [(2, 0, 0, 0), (64, 5, 1, 2), (128, 3, 1, 1), (128, 3, 1, 1)]
+        for i in range(len(conv_setup) - 1):
+            in_channel = conv_setup[i][0]
+            out_channel, kernel_size, stride, padding = conv_setup[i + 1]
+            self.__setattr__(f"conv{i + 1}", nn.Conv2d(in_channel, out_channel, kernel_size, stride, padding))
+            self.__setattr__(f"bn{i + 1}", nn.BatchNorm2d(out_channel))
+        self.conv_size = conv_setup
 
-        def conv2dSizeOut(size, kernelSize=3, stride=1, padding=1):
-            return (size - kernelSize + 2 * padding) // stride + 1
+        def conv2dSizeOut(size, layer=1):
+            size = size if layer == len(conv_setup) - 1 else conv2dSizeOut(size, layer + 1)
+            _, kernel_size, stride, padding = conv_setup[layer]
+            return (size - kernel_size + 2 * padding) // stride + 1
 
-        conv_size = conv2dSizeOut(conv2dSizeOut(conv2dSizeOut(board_size)))
+        out_ = conv2dSizeOut(board_size)
 
-        self.output = nn.Linear(conv_size ** 2 * out_size[2], board_size ** 2)
+        self.fc1 = nn.Linear(out_ ** 2 * conv_setup[-1][0], board_size ** 2)
         self.model_name = "GomokuAI-3"
 
     def forward(self, input):
-        input = nn.functional.relu(self.bn1(self.conv1(input)))
-        input = nn.functional.relu(self.bn2(self.conv2(input)))
-        input = nn.functional.relu(self.bn3(self.conv3(input)))
-        return self.output(input.view(input.size(0), -1))
+        for i in range(len(self.conv_size) - 1):
+            input = nn.functional.relu(
+                self.__getattr__(f"bn{i + 1}")(
+                    self.__getattr__(f"conv{i + 1}")(input)))
+        return self.fc1(input.view(input.size(0), -1))
+        # input = nn.functional.dropout(input, p=0.8, training=True)
+        # return self.fc2(input)
 
 
 class GomokuAI4(nn.Module):

@@ -7,6 +7,7 @@ Author: 韩昊轩
 from . import BaseDQN
 from ..Hyperparameters import Hyperparameters
 from ..Models import GomokuAI
+from ..Environment import Board, Utils
 
 import torch
 import torch.nn as nn
@@ -28,16 +29,47 @@ class DQN2(BaseDQN):
         self.learn_count = 0
         # self.loss = nn.MSELoss()
         # self.optimizer = optim.Adam(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
-        self.loss = nn.SmoothL1Loss()
+        # self.loss = nn.SmoothL1Loss()
         # self.optimizer = optim.AdamW(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
-        self.optimizer = optim.SGD(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
+        # self.optimizer = optim.SGD(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
+        loss_class = getattr(nn, hyperparameters.loss)
+        optimizer_class = getattr(optim, hyperparameters.optimizer)
+        self.loss = loss_class()
+        self.optimizer = optimizer_class(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
 
-    def act(self, state, valid_moves: np.ndarray):
-        valid_moves = valid_moves.reshape(self.action_size)
+    def act(self, board: Board, player):
+        valid_moves = board.get_valid_moves().reshape(self.action_size)
+        suggested_moves = board.get_suggested_moves(player).reshape(self.action_size)
+        # valid_moves *= suggested_moves # Let valid moves only in suggested moves
+        state = board.get_state()
         if np.random.rand() <= self.hyperparameters.epsilon:
             # Do Random
+            """
             action_values = np.random.uniform(-1, 1, size=self.action_size)
             valid_values = np.where(valid_moves == 1, action_values, -np.inf)
+            return np.argmax(valid_values)
+            """
+            # Do fast chose
+            atk2, atk3, atk4, atk5 = Utils.gen_dfs_atk_moves(state, True)
+            def3, def4 = Utils.gen_dfs_atk_moves(state, False)
+            pool = None
+            if atk5.any():
+                pool = atk5
+            elif def4.any():
+                pool = def4
+            elif atk4.any():
+                pool = atk4
+            elif def3.any():
+                pool = def3
+            elif atk3.any():
+                pool = atk3
+            elif atk2.any():
+                pool = atk2
+            else:
+                pool = valid_moves * suggested_moves
+            pool = pool.reshape(self.action_size)
+            action_values = np.random.uniform(-1, 1, size=self.action_size)
+            valid_values = np.where(pool == 1, action_values, -np.inf)
             return np.argmax(valid_values)
 
         # Do Think
@@ -51,7 +83,9 @@ class DQN2(BaseDQN):
         # return np.argmax(action_values.cpu().numpy()[0] * valid_moves)
         return np.argmax(valid_values)
 
-    def remember(self, state, next_state, action, reward, _is_done):
+    def remember(self, state: np.ndarray, next_state: np.ndarray, action, reward, _is_done):
+        state = state
+        next_state = next_state
         memory = np.hstack((
             state.reshape(self.action_size * 2),
             next_state.reshape(self.action_size * 2),
@@ -62,7 +96,8 @@ class DQN2(BaseDQN):
         self.memory_counter += 1
 
     def learn(self):
-        if self.memory_counter < self.hyperparameters.batch_size:
+        # if self.memory_counter < self.hyperparameters.batch_size:
+        if self.memory_counter < 16:
             return None
         if self.learn_count % self.hyperparameters.swap_model_each_iter == 0:
             self.target_model.load_state_dict(self.eval_model.state_dict())

@@ -5,6 +5,7 @@ Deep Q Network基类
 Author: 韩昊轩
 """
 from ..Hyperparameters import Hyperparameters
+from ..Environment import Board
 from abc import ABC, abstractmethod
 from pathlib import Path
 import numpy as np
@@ -28,11 +29,11 @@ class BaseDQN(ABC):
         self.device = 'cuda' if cuda else 'cpu'
 
     @abstractmethod
-    def act(self, state, valid_moves: np.ndarray):
+    def act(self, state: Board, player):
         pass
 
     @abstractmethod
-    def remember(self, state, next_state, action, reward, is_done):
+    def remember(self, state: np.ndarray, next_state: np.ndarray, action, reward, is_done):
         pass
 
     @abstractmethod

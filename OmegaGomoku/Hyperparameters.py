@@ -11,6 +11,8 @@ class Hyperparameters:
     swap_model_each_iter = 300  # 每学习N次交换Target和Eval模型
     train_epochs = 20
     tau = 0.005
+    loss = 'MSELoss'
+    optimizer = 'Adam'
 
     def __init__(self, **kwargs):
         for k in kwargs:

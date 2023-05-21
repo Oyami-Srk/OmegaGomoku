@@ -23,10 +23,9 @@ class HumanPlay:
         reward = 0
         while not done:
             steps += 1
-            action = self.agent.act(state, self.env.get_valid_moves())
+            action = self.agent.act(state, self.env.current_player)
             current_player = self.env.current_player
-            next_state, reward, done = self.env.step(action)
-            state = next_state
+            reward, done = self.env.step(action)
             # print("Player {} takes action: {}".format(self.env.current_player, action))
             x, y = divmod(action, self.env.board_size)
             self.gui_board.draw_piece(x, y, current_player)
@@ -41,10 +40,9 @@ class HumanPlay:
                 x, y, player = action
                 current_player = self.env.current_player
                 steps += 1
-                next_state, reward, done = self.env.step((x, y))
+                reward, done = self.env.step((x, y))
                 self.gui_board.draw_piece(x, y, current_player)
                 print(f"Player下{x}, {y} 奖励:{reward}")
-                state = next_state
             else:
                 return "AI win" if reward > 0 else "Draw"
             print("\n")

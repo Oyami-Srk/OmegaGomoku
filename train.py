@@ -9,25 +9,31 @@ from OmegaGomoku.Hyperparameters import Hyperparameters
 
 from tensorboardX import SummaryWriter
 
-board_size = 4
-win_size = 3
-target_episode = 30000
+board_size = 15
+win_size = 5
+target_episode = 5000
 model_dir = "models"
 
+"""
+note:
+batch_size=256, memory_size=20000, learning_rate=1e-06, gamma=0.65, epsilon=1.0, epsilon_decay_rate=0.995, epsilon_min=0.2, epsilon_max=1.0, epsilon_decay_rate_exp=2000, swap_model_each_iter=100, train_epochs=20, tau=0.005, loss=MSELoss, optimizer=Adam, 
+"""
 
 hyperparameters = Hyperparameters(
     batch_size=256,
-    memory_size=10000,  # 记忆空间大小
-    learning_rate=1e-6,  # 学习率
-    gamma=0.90,  # 奖励折扣因子，越高的话智能体会倾向于长期价值
+    memory_size=20000,  # 记忆空间大小
+    learning_rate=1e-5,  # 学习率
+    gamma=0.50,  # 奖励折扣因子，越高的话智能体会倾向于长期价值
     epsilon=1.0,  # 探索率，探索率越高随机探索的可能性越大
     epsilon_decay_rate=0.995,  # 探索率衰减率
-    epsilon_min=0.05,  # 最小探索率
+    epsilon_min=0.2,  # 最小探索率
     epsilon_max=1.00,  # 最大探索率
-    epsilon_decay_rate_exp=1500,  # 探索率指数衰减参数，越高越慢，e = e_min + (e_max - e_min) * exp(-1.0 * episode / rate)
+    epsilon_decay_rate_exp=2000,  # 探索率指数衰减参数，越高越慢，e = e_min + (e_max - e_min) * exp(-1.0 * episode / rate)
     swap_model_each_iter=100,  # 每学习N次交换Target和Eval模型
     train_epochs=20,
-    tau=0.005
+    tau=0.005,
+    loss='MSELoss',
+    optimizer='AdamW'
 )
 
 if __name__ == '__main__':
@@ -47,6 +53,7 @@ if __name__ == '__main__':
         if last_episode != 0:
             print(f"Resume from {last_episode}")
             deep_q_network.load(last_episode, model_dir)
+            target_episode += last_episode
     else:
         # os.removedirs(model_dir)
         # os.removedirs(log_dir)
@@ -57,7 +64,7 @@ if __name__ == '__main__':
         last_episode = 0
 
     trainer = SelfPlayTrainer(
-        env=GomokuEnv(board_size, win_size),
+        env=GomokuEnv(board_size=board_size, win_size=win_size),
         agent=DQNAgent(
             deep_q_network=deep_q_network,
             writer=writer,

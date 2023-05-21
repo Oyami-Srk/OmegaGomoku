@@ -4,3 +4,4 @@ References/
 .venv
 .idea
 **/__pycache__
+*.zip
