@@ -50,4 +50,4 @@ class DQNAgent(BaseAgent):
 
     def save(self, episode=None):
         if episode:
-            self.dqn.save(episode, self.model_dir)
+            return self.dqn.save(episode, self.model_dir)

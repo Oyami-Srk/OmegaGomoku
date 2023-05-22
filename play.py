@@ -12,7 +12,8 @@ def make_dqn_agent():
         board_size,
         win_size,
         hyperparameters=Hyperparameters(epsilon=0),
-        cuda=True
+        cuda=True,
+        training=False
     )
 
     last_episode = dqn.last_saved_episode(model_dir)
@@ -29,8 +30,8 @@ def make_dqn_agent():
     return dqn, agent
 
 
-# dqn, agent = make_dqn_agent()
-agent = MiniMaxAgent()
+dqn, agent = make_dqn_agent()
+# agent = MiniMaxAgent(board_size)
 
 p = HumanPlay(
     GomokuEnv(board_size=board_size, win_size=win_size),

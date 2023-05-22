@@ -3,15 +3,15 @@ import sys
 import time
 
 from OmegaGomoku import SelfPlayTrainer, GomokuEnv
-from OmegaGomoku.Agents import DQNAgent
+from OmegaGomoku.Agents import DQNAgent, MiniMaxAgent
 from OmegaGomoku.DQN import DQN
 from OmegaGomoku.Hyperparameters import Hyperparameters
 
 from tensorboardX import SummaryWriter
 
-board_size = 15
+board_size = 7
 win_size = 5
-target_episode = 5000
+target_episode = 50000
 model_dir = "models"
 
 """
@@ -22,8 +22,8 @@ batch_size=256, memory_size=20000, learning_rate=1e-06, gamma=0.65, epsilon=1.0,
 hyperparameters = Hyperparameters(
     batch_size=256,
     memory_size=20000,  # 记忆空间大小
-    learning_rate=1e-5,  # 学习率
-    gamma=0.50,  # 奖励折扣因子，越高的话智能体会倾向于长期价值
+    learning_rate=1e-6,  # 学习率
+    gamma=0.70,  # 奖励折扣因子，越高的话智能体会倾向于长期价值
     epsilon=1.0,  # 探索率，探索率越高随机探索的可能性越大
     epsilon_decay_rate=0.995,  # 探索率衰减率
     epsilon_min=0.2,  # 最小探索率
@@ -32,7 +32,7 @@ hyperparameters = Hyperparameters(
     swap_model_each_iter=100,  # 每学习N次交换Target和Eval模型
     train_epochs=20,
     tau=0.005,
-    loss='MSELoss',
+    loss='SmoothL1Loss',
     optimizer='AdamW'
 )
 
@@ -45,7 +45,8 @@ if __name__ == '__main__':
         board_size=board_size,
         win_size=win_size,
         hyperparameters=hyperparameters,
-        cuda=True
+        cuda=True,
+        training=True
     )
 
     if sys.argv[-1] == "continue":
@@ -70,6 +71,7 @@ if __name__ == '__main__':
             writer=writer,
             model_dir=model_dir
         ),
+        agent_rival=MiniMaxAgent(board_size, depth=1),
         gui_enabled=False
     )
 

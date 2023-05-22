@@ -6,12 +6,15 @@ from ..Environment import Board
 
 # MiniMax Code adapted from leonidas141/Gobang-minmax
 # noinspection all
-class Evaluation(object):
+class Evaluation():
 
-    def __init__(self):
+    def __init__(self, board_size=8, win_size=5):
+        # This AI is only for gomoku win_size=5
+        assert board_size >= 5 and win_size == 5
         self.POS = []
-        for i in range(15):
-            row = [(7 - max(abs(i - 7), abs(j - 7))) for j in range(15)]
+        h = board_size // 2 - ((board_size + 1) % 2)
+        for i in range(board_size):
+            row = [(h - max(abs(i - h), abs(j - h))) for j in range(board_size)]
             self.POS.append(tuple(row))
         self.POS = tuple(self.POS)
         self.STWO = 1  # 冲二
@@ -30,24 +33,25 @@ class Evaluation(object):
         self.result = [0 for i in range(30)]  # 保存当前直线分析值
         self.line = [0 for i in range(30)]  # 当前直线数据
         self.record = []  # 全盘分析结果 [row][col][方向]
-        for i in range(15):
+        for i in range(board_size):
             self.record.append([])
             self.record[i] = []
-            for j in range(15):
+            for j in range(board_size):
                 self.record[i].append([0, 0, 0, 0])
         self.count = []  # 每种棋局的个数：count[黑棋/白棋][模式]
         for i in range(3):
             data = [0 for i in range(20)]
             self.count.append(data)
+        self.board_size = board_size
         self.reset()
 
     # 复位数据
     def reset(self):
         TODO = self.TODO
         count = self.count
-        for i in range(15):
+        for i in range(self.board_size):
             line = self.record[i]
-            for j in range(15):
+            for j in range(self.board_size):
                 line[j][0] = TODO
                 line[j][1] = TODO
                 line[j][2] = TODO
@@ -80,10 +84,10 @@ class Evaluation(object):
         TODO, ANALYSED = self.TODO, self.ANALYSED
         self.reset()
         # 四个方向分析
-        for i in range(15):
+        for i in range(self.board_size):
             boardrow = board[i]
             recordrow = record[i]
-            for j in range(15):
+            for j in range(self.board_size):
                 if boardrow[j] != 0:
                     if recordrow[j][0] == TODO:  # 水平没有分析过？
                         self.__analysis_horizon(board, i, j)
@@ -101,8 +105,8 @@ class Evaluation(object):
         # 分别对白棋黑棋计算：FIVE, FOUR, THREE, TWO等出现的次数
         for c in (FIVE, FOUR, SFOUR, THREE, STHREE, TWO, STWO):
             check[c] = 1
-        for i in range(15):
-            for j in range(15):
+        for i in range(self.board_size):
+            for j in range(self.board_size):
                 stone = board[i][j]
                 if stone != 0:
                     for k in range(4):
@@ -200,8 +204,8 @@ class Evaluation(object):
 
         # 加上位置权值，棋盘最中心点权值是7，往外一格-1，最外圈是0
         wc, bc = 0, 0
-        for i in range(15):
-            for j in range(15):
+        for i in range(self.board_size):
+            for j in range(self.board_size):
                 stone = board[i][j]
                 if stone != 0:
                     if stone == WHITE:
@@ -220,10 +224,10 @@ class Evaluation(object):
     def __analysis_horizon(self, board, i, j):
         line, result, record = self.line, self.result, self.record
         TODO = self.TODO
-        for x in range(15):
+        for x in range(self.board_size):
             line[x] = board[i][x]
-        self.analysis_line(line, result, 15, j)
-        for x in range(15):
+        self.analysis_line(line, result, self.board_size, j)
+        for x in range(self.board_size):
             if result[x] != TODO:
                 record[i][x][0] = result[x]
         return record[i][j][0]
@@ -232,10 +236,10 @@ class Evaluation(object):
     def __analysis_vertical(self, board, i, j):
         line, result, record = self.line, self.result, self.record
         TODO = self.TODO
-        for x in range(15):
+        for x in range(self.board_size):
             line[x] = board[x][j]
-        self.analysis_line(line, result, 15, i)
-        for x in range(15):
+        self.analysis_line(line, result, self.board_size, i)
+        for x in range(self.board_size):
             if result[x] != TODO:
                 record[x][j][1] = result[x]
         return record[i][j][1]
@@ -249,8 +253,8 @@ class Evaluation(object):
         else:
             x, y = 0, i - j
         k = 0
-        while k < 15:
-            if x + k > 14 or y + k > 14:
+        while k < self.board_size:
+            if x + k > self.board_size - 1 or y + k > self.board_size - 1:
                 break
             line[k] = board[y + k][x + k]
             k += 1
@@ -264,13 +268,13 @@ class Evaluation(object):
     def __analysis_right(self, board, i, j):
         line, result, record = self.line, self.result, self.record
         TODO = self.TODO
-        if 14 - i < j:
-            x, y, realnum = j - 14 + i, 14, 14 - i
+        if (self.board_size - 1) - i < j:
+            x, y, realnum = j - (self.board_size - 1) + i, self.board_size - 1, self.board_size - 1 - i
         else:
             x, y, realnum = 0, i + j, j
         k = 0
-        while k < 15:
-            if x + k > 14 or y - k < 0:
+        while k < self.board_size:
+            if x + k > self.board_size - 1 or y - k < 0:
                 break
             line[k] = board[y - k][x + k]
             k += 1
@@ -284,8 +288,8 @@ class Evaluation(object):
         self.reset()
         record = self.record
         TODO = self.TODO
-        for i in range(15):
-            for j in range(15):
+        for i in range(self.board_size):
+            for j in range(self.board_size):
                 if board[i][j] != 0 and 1:
                     if self.record[i][j][0] == TODO:
                         self.__analysis_horizon(board, i, j)
@@ -450,9 +454,9 @@ class Evaluation(object):
 
     def textrec(self, direction=0):
         text = []
-        for i in range(15):
+        for i in range(self.board_size):
             line = ''
-            for j in range(15):
+            for j in range(self.board_size):
                 line += '%x ' % (self.record[i][j][direction] & 0xf)
             text.append(line)
         return '\n'.join(text)
@@ -462,20 +466,21 @@ class Evaluation(object):
 class Searcher(object):
 
     # 初始化
-    def __init__(self):
-        self.evaluator = Evaluation()
-        self.board = [[0 for n in range(15)] for i in range(15)]
+    def __init__(self, board_size=8, win_size=5):
+        self.evaluator = Evaluation(board_size, win_size)
+        self.board = [[0 for n in range(board_size)] for i in range(board_size)]
         self.gameover = 0
         self.overvalue = 0
         self.maxdepth = 3
+        self.board_size = board_size
 
     # 产生当前棋局的走法
     def genmove(self, turn):
         moves = []
         board = self.board
         POSES = self.evaluator.POS
-        for i in range(15):
-            for j in range(15):
+        for i in range(self.board_size):
+            for j in range(self.board_size):
                 if board[i][j] == 0:
                     score = POSES[i][j]
                     moves.append((score, i, j))
@@ -544,15 +549,17 @@ class Searcher(object):
 
 # End of MiniMax Code
 class MiniMaxAgent(BaseAgent):
-    def __init__(self, *args, **kwargs):
-        self.searcher = Searcher()
+    def __init__(self, board_size=8, depth=1, *args, **kwargs):
+        self.searcher = Searcher(board_size)
+        self.board_size = board_size
+        self.depth = depth
 
     def act(self, board: Board, player):
         board = board.get_state().copy()
         board = board[0] + board[1] * 2
         self.searcher.board = board.tolist()
-        score, row, col = self.searcher.search(player, depth=2)
-        return col + row * 15
+        score, row, col = self.searcher.search(player, depth=self.depth)
+        return col + row * self.board_size
 
     def remember(self, state: Board, next_state: Board, action, reward, is_done):
         """

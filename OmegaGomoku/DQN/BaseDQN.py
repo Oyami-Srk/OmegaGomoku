@@ -15,7 +15,7 @@ import re
 
 
 class BaseDQN(ABC):
-    def __init__(self, board_size=8, win_size=5, hyperparameters=Hyperparameters(), cuda=False):
+    def __init__(self, board_size=8, win_size=5, hyperparameters=Hyperparameters(), cuda=False, training=True):
         """
         :param board_size: 棋盘大小
         :param win_size: 取胜所需的棋子连线大小
@@ -90,6 +90,7 @@ class BaseDQN(ABC):
         savepath = self.make_savepath(model_dir)
         savepath = savepath.joinpath(f"{episode}.pt")
         torch.save(checkpoint, savepath)
+        return savepath
 
     def load(self, episode, model_dir=None):
         # self.model.load_state_dict(torch.load(filename))
@@ -97,3 +98,4 @@ class BaseDQN(ABC):
         savepath = savepath.joinpath(f"{episode}.pt")
         checkpoint = torch.load(savepath)
         self.load_checkpoint(checkpoint)
+        return checkpoint

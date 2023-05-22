@@ -16,7 +16,7 @@ import numpy as np
 
 
 class DQN2(BaseDQN):
-    def __init__(self, board_size=8, win_size=5, hyperparameters=Hyperparameters(), cuda=False):
+    def __init__(self, board_size=8, win_size=5, hyperparameters=Hyperparameters(), cuda=False, training=True):
         self.hyperparameters = None  # Make pycharm happy =v=
         super().__init__(board_size, win_size, hyperparameters, cuda)
         self.action_size = board_size ** 2
@@ -27,6 +27,7 @@ class DQN2(BaseDQN):
 
         self.memory_counter = 0
         self.learn_count = 0
+        self.training = training
         # self.loss = nn.MSELoss()
         # self.optimizer = optim.Adam(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
         # self.loss = nn.SmoothL1Loss()
@@ -40,9 +41,10 @@ class DQN2(BaseDQN):
     def act(self, board: Board, player):
         valid_moves = board.get_valid_moves().reshape(self.action_size)
         suggested_moves = board.get_suggested_moves(player).reshape(self.action_size)
-        # valid_moves *= suggested_moves # Let valid moves only in suggested moves
+        if self.training:
+            valid_moves *= suggested_moves  # Let valid moves only in suggested moves
         state = board.get_state()
-        if np.random.rand() <= self.hyperparameters.epsilon:
+        if self.training and np.random.rand() <= self.hyperparameters.epsilon:
             # Do Random
             """
             action_values = np.random.uniform(-1, 1, size=self.action_size)
@@ -66,7 +68,8 @@ class DQN2(BaseDQN):
             elif atk2.any():
                 pool = atk2
             else:
-                pool = valid_moves * suggested_moves
+                # pool = valid_moves * suggested_moves
+                pool = valid_moves
             pool = pool.reshape(self.action_size)
             action_values = np.random.uniform(-1, 1, size=self.action_size)
             valid_values = np.where(pool == 1, action_values, -np.inf)
@@ -78,7 +81,8 @@ class DQN2(BaseDQN):
         # state = torch.from_numpy(state).float().unsqueeze(0).to('cuda' if self.cuda else 'cpu')
         state = torch.from_numpy(state).float().to('cuda' if self.cuda else 'cpu')
         # print(state, state.size())
-        action_values = self.eval_model(state)
+        with torch.no_grad():
+            action_values = self.eval_model(state)
         valid_values = np.where(valid_moves == 1, action_values.cpu().detach().numpy()[0], -np.inf)
         # return np.argmax(action_values.cpu().numpy()[0] * valid_moves)
         return np.argmax(valid_values)
