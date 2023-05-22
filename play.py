@@ -6,28 +6,31 @@ from OmegaGomoku.Play import HumanPlay
 
 from train import board_size, win_size, model_dir
 
-dqn = DQN(
-    board_size,
-    win_size,
-    hyperparameters=Hyperparameters(epsilon=0),
-    cuda=True
-)
 
-last_episode = dqn.last_saved_episode(model_dir)
-if last_episode == 0:
-    msgbox.showerror("错误", "没有训练好的模型")
-    exit(0)
+def make_dqn_agent():
+    dqn = DQN(
+        board_size,
+        win_size,
+        hyperparameters=Hyperparameters(epsilon=0),
+        cuda=True
+    )
 
-if len(sys.argv) > 1:
-    last_episode = int(sys.argv[1])
+    last_episode = dqn.last_saved_episode(model_dir)
+    if last_episode == 0:
+        msgbox.showerror("错误", "没有训练好的模型")
+        exit(0)
 
-print(f"Loading Episode: {last_episode}")
-dqn.load(last_episode, model_dir)
-agent = DQNAgent(
-    deep_q_network=dqn,
-    writer=None,
-    model_dir=model_dir
-)
+    if len(sys.argv) > 1:
+        last_episode = int(sys.argv[1])
+
+    print(f"Loading Episode: {last_episode}")
+    dqn.load(last_episode, model_dir)
+    agent = DQNAgent(deep_q_network=dqn, writer=None, model_dir=model_dir)
+    return dqn, agent
+
+
+# dqn, agent = make_dqn_agent()
+agent = MiniMaxAgent()
 
 p = HumanPlay(
     GomokuEnv(board_size=board_size, win_size=win_size),
