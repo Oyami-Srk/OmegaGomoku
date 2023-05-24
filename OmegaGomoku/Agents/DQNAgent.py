@@ -21,7 +21,7 @@ class DQNAgent(BaseAgent):
     def act(self, state: Board, player):
         return self.dqn.act(state, player)
 
-    def remember(self, state: np.ndarray, next_state: np.ndarray, action, reward, is_done):
+    def remember(self, state: np.ndarray, next_state: np.ndarray | None, action, reward, is_done):
         self.dqn.remember(state, next_state, action, reward, is_done)
 
     def learn(self, episode=None):

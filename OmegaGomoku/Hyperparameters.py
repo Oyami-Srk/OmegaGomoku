@@ -8,7 +8,7 @@ class Hyperparameters:
     epsilon_min = 0.05,  # 最小探索率
     epsilon_max = 1.00,  # 最大探索率
     epsilon_decay_rate_exp = 1000,  # 探索率指数衰减参数，e = e_min + (e_max - e_min) * exp(-1.0 * episode / rate)
-    swap_model_each_iter = 300  # 每学习N次交换Target和Eval模型
+    update_target_model_each_iter = 300  # 每学习N次更新Target模型
     train_epochs = 20
     tau = 0.005
     loss = 'MSELoss'

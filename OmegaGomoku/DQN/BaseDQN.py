@@ -4,6 +4,7 @@ Deep Q Network基类
 
 Author: 韩昊轩
 """
+from .Memory import Memory
 from ..Hyperparameters import Hyperparameters
 from ..Environment import Board
 from abc import ABC, abstractmethod
@@ -27,14 +28,15 @@ class BaseDQN(ABC):
         self.hyperparameters = hyperparameters
         self.cuda = cuda
         self.device = 'cuda' if cuda else 'cpu'
+        self.memory = Memory(hyperparameters.memory_size)
+        self.training = training
 
     @abstractmethod
     def act(self, state: Board, player):
         pass
 
-    @abstractmethod
-    def remember(self, state: np.ndarray, next_state: np.ndarray, action, reward, is_done):
-        pass
+    def remember(self, state: np.ndarray, next_state: np.ndarray | None, action, reward, is_done):
+        self.memory.push(state, next_state, action, reward, is_done)
 
     @abstractmethod
     def learn(self):

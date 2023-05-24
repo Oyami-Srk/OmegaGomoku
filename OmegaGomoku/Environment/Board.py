@@ -95,8 +95,8 @@ class Board:
     PATTERN_MAX_LEN = max(PATTERN_LENS)
     PATTERN_MIN_LEN = min(PATTERN_LENS)
     PATTERNS_REWARD = {
-        'L5': 100,
-        'H4': 80,
+        'L5': 200,
+        'H4': 100,
         'C4': 50,
         'H3': 30,
         'M3': 20,
@@ -126,8 +126,9 @@ class Board:
         self.board[player - 1, x, y] = 1
         pattern = self._find_pattern(x, y, player)
         self.steps += 1
-        return (self.PATTERNS_REWARD[pattern] if pattern is not None else 0,
-                self.steps == self.board_size ** 2 or pattern == 'L5')
+        is_draw = self.steps == self.board_size ** 2 and pattern != 'L5'
+        return (self.PATTERNS_REWARD[pattern] if pattern is not None else -150 if is_draw else 0,
+                is_draw or pattern == 'L5')
 
     def get_valid_moves(self) -> np.ndarray:
         """

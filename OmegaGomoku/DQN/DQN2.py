@@ -4,7 +4,7 @@
 Author: 韩昊轩
 """
 
-from . import BaseDQN
+from . import BaseDQN, Memory, MemoryEntry
 from ..Hyperparameters import Hyperparameters
 from ..Models import GomokuAI
 from ..Environment import Board, Utils
@@ -19,13 +19,13 @@ class DQN2(BaseDQN):
     def __init__(self, board_size=8, win_size=5, hyperparameters=Hyperparameters(), cuda=False, training=True):
         self.hyperparameters = None  # Make pycharm happy =v=
         super().__init__(board_size, win_size, hyperparameters, cuda)
+        self.memory: Memory = self.memory  # For auto-complete
         self.action_size = board_size ** 2
-        self.memory = np.zeros((hyperparameters.memory_size, self.action_size * 4 + 2))
+        # self.memory = np.zeros((hyperparameters.memory_size, self.action_size * 4 + 2))
         # self.memory = [None] * self.hyperparameters.memory_size
-        self.eval_model = GomokuAI(board_size).to('cuda' if cuda else 'cpu')
-        self.target_model = GomokuAI(board_size).to('cuda' if cuda else 'cpu')
+        self.eval_model = GomokuAI(board_size).train(training).to(self.device)
+        self.target_model = GomokuAI(board_size).train(training).to(self.device)
 
-        self.memory_counter = 0
         self.learn_count = 0
         self.training = training
         # self.loss = nn.MSELoss()
@@ -82,59 +82,45 @@ class DQN2(BaseDQN):
         state = torch.from_numpy(state).float().to('cuda' if self.cuda else 'cpu')
         # print(state, state.size())
         with torch.no_grad():
+            # 不需要梯度
             action_values = self.eval_model(state)
         valid_values = np.where(valid_moves == 1, action_values.cpu().detach().numpy()[0], -np.inf)
         # return np.argmax(action_values.cpu().numpy()[0] * valid_moves)
         return np.argmax(valid_values)
 
-    def remember(self, state: np.ndarray, next_state: np.ndarray, action, reward, _is_done):
-        state = state
-        next_state = next_state
-        memory = np.hstack((
-            state.reshape(self.action_size * 2),
-            next_state.reshape(self.action_size * 2),
-            [action, reward]
-        ))
-        index = self.memory_counter % self.hyperparameters.memory_size
-        self.memory[index, :] = memory
-        self.memory_counter += 1
-
     def learn(self):
         # if self.memory_counter < self.hyperparameters.batch_size:
-        if self.memory_counter < 16:
+        if len(self.memory) < 16:
             return None
-        if self.learn_count % self.hyperparameters.swap_model_each_iter == 0:
+        if self.learn_count % self.hyperparameters.update_target_model_each_iter == 0:
             self.target_model.load_state_dict(self.eval_model.state_dict())
-        sample_index = np.random.choice(
-            min(self.hyperparameters.memory_size, self.memory_counter),
-            size=self.hyperparameters.batch_size)
-        batch_memory = self.memory[sample_index, :]
-        s = torch.from_numpy(
-            batch_memory[:, 0:self.action_size * 2]
-            .reshape([-1, 2, self.board_size, self.board_size])
-            .astype(np.float32)
-        ).to('cuda' if self.cuda else 'cpu')
-        s_ = torch.from_numpy(
-            batch_memory[:, self.action_size * 2:self.action_size * 4]
-            .reshape([-1, 2, self.board_size, self.board_size])
-            .astype(np.float32)
-        ).to('cuda' if self.cuda else 'cpu')
-        a = torch.from_numpy(batch_memory[:, self.action_size * 4]).long().to('cuda' if self.cuda else 'cpu')
-        r = torch.from_numpy(batch_memory[:, self.action_size * 4 + 1]).to('cuda' if self.cuda else 'cpu')
+        batch_size = min(self.hyperparameters.batch_size, len(self.memory))
+        batch = self.memory.sample(batch_size)
+        print(f"Sample: {batch[0]}")
+        batch = MemoryEntry(*zip(*batch))
+        states = torch.from_numpy(np.array(batch.state, dtype=np.float32)).to(self.device)
+        actions = torch.from_numpy(np.array(batch.action, dtype=np.int64)).to(self.device)
+        rewards = torch.from_numpy(np.array(batch.reward, dtype=np.float32)).to(self.device)
 
-        q_eval = self.eval_model(s)
+        non_final_mask = torch.tensor(tuple(1 if not i else 0 for i in batch.is_done)).to(self.device)
+        non_final_next_states = torch.from_numpy(
+            np.array(tuple(i for i in batch.next_state if i is not None), dtype=np.float32)
+        ).to(self.device)
+
+        q_eval = self.eval_model(states)
         q_target = q_eval.clone()
 
-        batch_index = np.arange(self.hyperparameters.batch_size, dtype=np.int32)
-        q_target[batch_index, a] = torch.where(
-            r != 0, r, self.hyperparameters.gamma * torch.max(self.target_model(s_), dim=1)[0]
-        ).float()
+        batch_index = np.arange(batch_size, dtype=np.int32)
+        next_state_values = torch.zeros(batch_size, device=self.device)
+        with torch.no_grad():
+            next_state_values[non_final_mask == 1] = self.target_model(non_final_next_states).max(1)[0]
+        q_target[batch_index, actions] = rewards + self.hyperparameters.gamma * next_state_values * non_final_mask
 
         # fit
         q_target = q_target.detach()
         loss = 0
         for _ in range(self.hyperparameters.train_epochs):
-            pred = self.eval_model(s)
+            pred = self.eval_model(states)
             pred_loss = self.loss(pred, q_target)
             self.optimizer.zero_grad()
             pred_loss.backward()
@@ -148,15 +134,15 @@ class DQN2(BaseDQN):
         return {
             'model': self.eval_model.state_dict(),
             'memory': self.memory,
-            'memory_counter': self.memory_counter,
-            'hyperparameters': self.hyperparameters
+            'hyperparameters': self.hyperparameters,
+            'optimizer': self.optimizer.state_dict()
         }
 
     def load_checkpoint(self, checkpoint):
         self.eval_model.load_state_dict(checkpoint['model'])
         self.target_model.load_state_dict(checkpoint['model'])
+        self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.memory = checkpoint['memory']
-        self.memory_counter = checkpoint['memory_counter']
         self.hyperparameters = checkpoint['hyperparameters']
 
     def get_network_name(self):
