@@ -584,3 +584,6 @@ class MiniMaxAgent(BaseAgent):
         Agent do not need to save.
         """
         pass
+
+    def create_eval(self) -> 'MiniMaxAgent':
+        return MiniMaxAgent(self.board_size, self.depth)

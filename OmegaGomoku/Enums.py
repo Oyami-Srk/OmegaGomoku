@@ -1,7 +1,7 @@
 class Player:
     EMPTY = 0  # 空白
-    BLACK = 1  # 黑方
-    WHITE = 2  # 白方
+    BLACK = 1  # 黑方, O
+    WHITE = 2  # 白方, X
 
     @staticmethod
     def SwitchPlayer(player: int) -> int:

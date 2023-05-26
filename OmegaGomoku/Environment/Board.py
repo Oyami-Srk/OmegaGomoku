@@ -94,15 +94,6 @@ class Board:
     PATTERN_LENS = set(map(len, PATTERNS_FLATTEN))
     PATTERN_MAX_LEN = max(PATTERN_LENS)
     PATTERN_MIN_LEN = min(PATTERN_LENS)
-    PATTERNS_REWARD = {
-        'L5': 200,
-        'H4': 100,
-        'C4': 50,
-        'H3': 30,
-        'M3': 20,
-        'H2': 10,
-        'M2': 5
-    }
 
     def __init__(self, board_size=8, win_size=5):
         self.board = np.zeros((2, board_size, board_size), dtype=int)
@@ -117,18 +108,22 @@ class Board:
         self.board = np.zeros(self.board.shape, dtype=int)
         self.steps = 0
 
-    def put(self, x, y, player) -> tuple[int, bool] | None:
+    def put(self, x, y, player) -> str | None:
         """
-        :return: 返回当前着子产生的价值和棋局是否产生胜利
+        :return: 返回当前着子产生的棋形
         """
         if (self.board[0, x, y] + self.board[1, x, y]) != 0:
-            return None
+            raise Exception(f"Player {player} 试图下在有子的位置 {x},{y}")
         self.board[player - 1, x, y] = 1
-        pattern = self._find_pattern(x, y, player)
+        pattern = self.find_pattern(x, y, player)
         self.steps += 1
-        is_draw = self.steps == self.board_size ** 2 and pattern != 'L5'
-        return (self.PATTERNS_REWARD[pattern] if pattern is not None else -150 if is_draw else 0,
-                is_draw or pattern == 'L5')
+        # is_draw = self.steps == self.board_size ** 2 and pattern != 'L5'
+        # return (self.PATTERNS_REWARD[pattern] if pattern is not None else -150 if is_draw else 0,
+        #         is_draw or pattern == 'L5')
+        return pattern
+
+    def is_done(self):
+        return self.steps == self.board_size ** 2
 
     def get_valid_moves(self) -> np.ndarray:
         """
@@ -161,11 +156,15 @@ class Board:
         suggested_moves[suggested_moves == 0] = -np.inf
         return suggested_moves
 
-    def _find_pattern(self, x, y, player) -> str | None:
+    def find_pattern(self, x, y, player) -> str | None:
         """
         落子在x, y时产生的最佳棋形
         """
+        # TODO: 考虑一下把所有形成的棋形纳入考虑以使AI形成组合棋形
         board = self.board[player - 1]
+        is_a_attempt = board[x, y] == 0
+        if is_a_attempt:
+            board[x, y] = 1
         to_check_lines = {}
         for pattern_len in self.PATTERN_LENS:
             lines = get_lines_to_check(board, x, y, pattern_len)
@@ -177,7 +176,11 @@ class Board:
                 lines = to_check_lines[pattern_len]
                 for line in lines:
                     if (line == pattern).all() or (line == list(reversed(pattern))).all():
+                        if is_a_attempt:
+                            board[x, y] = 0
                         return pattern_key
+        if is_a_attempt:
+            board[x, y] = 0
         return None
 
     @staticmethod

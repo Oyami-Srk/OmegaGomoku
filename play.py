@@ -2,7 +2,6 @@ import sys
 
 from OmegaGomoku import *
 import tkinter.messagebox as msgbox
-from OmegaGomoku.Play import HumanPlay
 
 from train import board_size, win_size, model_dir
 
@@ -30,25 +29,33 @@ def make_dqn_agent():
     return dqn, agent
 
 
+gui_board = GUIBoard(board_size, mode=GameType.PLAYER_VS_AI)
 dqn, agent = make_dqn_agent()
-# agent = MiniMaxAgent(board_size)
-
-p = HumanPlay(
-    GomokuEnv(board_size=board_size, win_size=win_size),
-    agent
+human_agent = HumanAgent(gui_board=gui_board)
+env = GomokuEnv(
+    rival_agent=human_agent,
+    board_size=board_size,
+    win_size=win_size,
+    gui_board=gui_board
 )
 
-done = False
+quit = False
 
+while not quit:
+    board = env.reset()
+    done = False
+    steps = 0
+    terminal_status = 0
+    while not done:
+        steps += 1
+        # 先手，AI智能体
+        player = env.current_player
+        action = agent.act(board, player)
+        board, reward, terminal_status = env.step(action)
+        done = terminal_status is not None
 
-def on_done():
-    global done
-    done = True
-
-
-while not done:
-    result = p.play(on_done)
     try:
-        msgbox.showinfo("游戏结束", result)
+        msgbox.showinfo("游戏结束",
+                        "AI获胜" if terminal_status == 1 else "人类获胜" if terminal_status == -1 else "平局")
     except:
         pass

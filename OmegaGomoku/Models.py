@@ -20,40 +20,6 @@ class GomokuAI1(nn.Module):
         return x
 
 
-class GomokuAI2(nn.Sequential):
-    def __init__(self, board_size):
-        # super(GomokuAI, self).__init__()
-        # self.fc1 = nn.Linear(input_size, hidden_size).to('cuda' if cuda else 'cpu')
-        # self.fc2 = nn.Linear(hidden_size, output_size).to('cuda' if cuda else 'cpu')
-        ks = (2, 2)
-        super(GomokuAI2, self).__init__(
-            nn.Conv2d(2, 64, ks, stride=1, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 2), 1),
-
-            nn.Conv2d(64, 128, ks, stride=1, padding=1),
-            nn.BatchNorm2d(128),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 2), 1),
-
-            nn.Conv2d(128, 256, ks, stride=1, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.MaxPool2d((2, 2), 1),
-            nn.Flatten(),
-            nn.Linear(256 * (1 if board_size <= 3 else (board_size - 3)) ** 2, 1024),
-            nn.ReLU(),
-            nn.Linear(1024, board_size ** 2))
-        self.model_name = "GomokuAI-2"
-
-    # def forward(self, x):
-    # x = x.view(x.size(0), -1)
-    # x = torch.relu(self.fc1(x))
-    # x = self.fc2(x)
-    # return x
-
-
 class GomokuAI3(nn.Module):
     def __init__(self, board_size=8):
         super(GomokuAI3, self).__init__()

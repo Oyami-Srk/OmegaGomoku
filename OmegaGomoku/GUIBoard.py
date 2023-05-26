@@ -39,17 +39,16 @@ class GUIBoard:
     def __run(self):
         self._root = tk.Tk()
         self._root.title("五子棋")
-        self._root.geometry(f"{self._size * 50 + 50}x{self._size * 50 + 100}")
+        self._root.geometry(f"{self._size * 50 + 50}x{self._size * 50 + 150}")
         self._root.resizable(False, False)
         self._canvas = tk.Canvas(self._root, width=self._size * 50 + 50, height=self._size * 50 + 50, bg="#EBD5B5")
         self._canvas.pack()
         if self._mode == GameType.PLAYER_VS_AI or self._mode == GameType.PLAYER_VS_PLAYER:
             self._canvas.bind("<Button-1>", self.__click)
             self._reset_button = tk.Button(self._root, text="复位", command=self.reset, font=("微软雅黑", 13))
-            self._reset_button.pack()
-        else:
-            self._label3 = tk.Label(self._root, text="训练信息", font=("微软雅黑", 12))
-            self._label3.place(x=150, y=self._size * 50 + 74)
+            # self._reset_button.pack()
+        self._label3 = tk.Label(self._root, text="信息", font=("微软雅黑", 12))
+        self._label3.place(x=5, y=self._size * 50 + 96)
 
         self.reset()
         self._root.protocol("WM_DELETE_WINDOW", self.__del__)
@@ -138,8 +137,7 @@ class GUIBoard:
         :param text: 提示信息
         :return:
         """
-        if self._root is not None and self._mode == GameType.AI_VS_AI:
-            self._label3.config(text=text)
+        self._label3.config(text=text)
 
     def on_reset(self, cb):
         self._reset_callback = cb

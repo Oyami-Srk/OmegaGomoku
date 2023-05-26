@@ -1,20 +1,15 @@
-import json
-import math
-
-import numpy as np
-
 from . import BaseAgent
-from ..DQN import BaseDQN
-from tensorboardX import SummaryWriter
 from ..Environment import Board
+from ..GUIBoard import GUIBoard
 
 
-class MCTSAgent(BaseAgent):
-    def __init__(self, *args, **kwargs):
-        pass
+class HumanAgent(BaseAgent):
+    def __init__(self, gui_board: GUIBoard):
+        self.gui_board = gui_board
 
     def act(self, board: Board, player):
-        pass
+        x, y, _ = self.gui_board.wait_place()
+        return x, y
 
     def remember(self, state: Board, next_state: Board, action, reward, is_done):
         """
@@ -40,5 +35,5 @@ class MCTSAgent(BaseAgent):
         """
         pass
 
-    def create_eval(self) -> 'BaseAgent':
+    def create_eval(self) -> 'HumanAgent':
         pass

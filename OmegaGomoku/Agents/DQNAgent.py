@@ -1,4 +1,3 @@
-import json
 import math
 
 import numpy as np
@@ -11,12 +10,13 @@ from ..Environment import Board
 
 class DQNAgent(BaseAgent):
 
-    def __init__(self, deep_q_network: BaseDQN, writer: SummaryWriter | None = None, model_dir=None):
+    def __init__(self, deep_q_network: BaseDQN, writer: SummaryWriter | None = None, model_dir=None, is_eval=False):
         self.dqn = deep_q_network
         self.writer = writer
         self.model_dir = model_dir
         if self.writer is not None:
             self.writer.add_text("Train/Hyperparameters", text_string=str(self.dqn.hyperparameters))
+        self.is_eval = is_eval
 
     def act(self, state: Board, player):
         return self.dqn.act(state, player)
@@ -49,5 +49,20 @@ class DQNAgent(BaseAgent):
         self.dqn.decay_epsilon(f)
 
     def save(self, episode=None):
-        if episode:
+        if episode and not self.is_eval:
             return self.dqn.save(episode, self.model_dir)
+
+    def create_eval(self) -> 'DQNAgent':
+        dqn = type(self.dqn)(
+            board_size=self.dqn.board_size,
+            win_size=self.dqn.win_size,
+            hyperparameters=self.dqn.hyperparameters,
+            cuda=self.dqn.cuda,
+            training=False
+        )
+        return DQNAgent(
+            deep_q_network=dqn,
+            writer=None,
+            model_dir=None,
+            is_eval=True
+        )

@@ -27,3 +27,7 @@ class BaseAgent(ABC):
     @abstractmethod
     def save(self, **kwargs):
         pass
+
+    @abstractmethod
+    def create_eval(self) -> 'BaseAgent':
+        pass

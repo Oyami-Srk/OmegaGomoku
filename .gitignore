@@ -5,3 +5,4 @@ References/
 .idea
 **/__pycache__
 *.zip
+*.pt

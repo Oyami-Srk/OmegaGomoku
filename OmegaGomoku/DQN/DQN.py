@@ -15,24 +15,16 @@ import torch.optim as optim
 import numpy as np
 
 
-class DQN2(BaseDQN):
+class DQN(BaseDQN):
     def __init__(self, board_size=8, win_size=5, hyperparameters=Hyperparameters(), cuda=False, training=True):
-        self.hyperparameters = None  # Make pycharm happy =v=
         super().__init__(board_size, win_size, hyperparameters, cuda)
         self.memory: Memory = self.memory  # For auto-complete
         self.action_size = board_size ** 2
-        # self.memory = np.zeros((hyperparameters.memory_size, self.action_size * 4 + 2))
-        # self.memory = [None] * self.hyperparameters.memory_size
         self.eval_model = GomokuAI(board_size).train(training).to(self.device)
-        self.target_model = GomokuAI(board_size).train(training).to(self.device)
+        self.target_model = GomokuAI(board_size).eval().to(self.device)
 
         self.learn_count = 0
         self.training = training
-        # self.loss = nn.MSELoss()
-        # self.optimizer = optim.Adam(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
-        # self.loss = nn.SmoothL1Loss()
-        # self.optimizer = optim.AdamW(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
-        # self.optimizer = optim.SGD(self.eval_model.parameters(), lr=hyperparameters.learning_rate)
         loss_class = getattr(nn, hyperparameters.loss)
         optimizer_class = getattr(optim, hyperparameters.optimizer)
         self.loss = loss_class()
@@ -96,7 +88,7 @@ class DQN2(BaseDQN):
             self.target_model.load_state_dict(self.eval_model.state_dict())
         batch_size = min(self.hyperparameters.batch_size, len(self.memory))
         batch = self.memory.sample(batch_size)
-        print(f"Sample: {batch[0]}")
+        # print(f"Sample: {batch[0]}")
         batch = MemoryEntry(*zip(*batch))
         states = torch.from_numpy(np.array(batch.state, dtype=np.float32)).to(self.device)
         actions = torch.from_numpy(np.array(batch.action, dtype=np.int64)).to(self.device)
