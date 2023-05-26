@@ -39,7 +39,7 @@ class GUIBoard:
     def __run(self):
         self._root = tk.Tk()
         self._root.title("五子棋")
-        self._root.geometry(f"{self._size * 50 + 50}x{self._size * 50 + 150}")
+        self._root.geometry(f"{self._size * 50 + 50}x{self._size * 50 + 120}")
         self._root.resizable(False, False)
         self._canvas = tk.Canvas(self._root, width=self._size * 50 + 50, height=self._size * 50 + 50, bg="#EBD5B5")
         self._canvas.pack()
