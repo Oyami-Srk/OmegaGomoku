@@ -11,8 +11,14 @@ PATTERNS_REWARD = {
 }
 
 PATTERNS_GAMMA = {
-    'rival': [0.5, 2, 3],
-    'break': [0.5, 1, 3]
+    'rival': [0.3, 0.5, 0.8],
+    'break': [0.3, 0.5, 1]
+}
+
+FINAL_STATUS = {
+    'win': 800,
+    'loss': -200,
+    'draw': -20
 }
 
 
@@ -22,8 +28,13 @@ def calculate_reward(pattern: str | None,
                      terminal_status: int | None) -> float:
     if pattern is None and break_pattern is None and rival_pattern is None:
         return 0
-    if terminal_status is not None and terminal_status == 0:
-        return 0
+    if terminal_status is not None:
+        if terminal_status == 0:
+            return FINAL_STATUS['draw']
+        elif terminal_status == 1:
+            return FINAL_STATUS['win']
+        else:
+            return FINAL_STATUS['loss']
     reward = 0
     if pattern is not None:
         # 构成了特定的棋形

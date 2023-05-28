@@ -166,7 +166,6 @@ class Board:
         """
         落子在x, y时产生的最佳棋形
         """
-        # TODO: 考虑一下把所有形成的棋形纳入考虑以使AI形成组合棋形
         # print(f"Find pattern when put {x},{y} as {player}")
         board = self.board[player - 1]
         is_a_attempt = board[x, y] == 0

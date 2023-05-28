@@ -1,6 +1,7 @@
 # 基于DQN强化深度学习的五子棋博弈AI
 ---
 作者：韩昊轩
+
 时间：2023年五月
 
 Currently, using DQN2 as Learning algorithm and GomokuAI3 as Network model.
@@ -21,3 +22,5 @@ Currently, using DQN2 as Learning algorithm and GomokuAI3 as Network model.
 2. 优化卷积神经网络结构
 3. 调整epsilon随机落子算法
 4. 优化动作选择遮罩，引入更多先验知识，限制AI落子
+
+###   

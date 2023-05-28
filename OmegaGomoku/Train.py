@@ -40,7 +40,7 @@ def evaluate_win_rate(env: GomokuEnv,
     return wins / rounds, draws / rounds, steps / rounds, rewards / rounds
 
 
-class SelfPlayTrainer:
+class Trainer:
     def __init__(self,
                  env: GomokuEnv,
                  agent: DQNAgent,
