@@ -8,7 +8,11 @@ class HumanAgent(BaseAgent):
         self.gui_board = gui_board
 
     def act(self, board: Board, player):
-        x, y, _ = self.gui_board.wait_place()
+        # x, y, _ = self.gui_board.wait_place()
+        result = self.gui_board.wait_place()
+        if result is None:
+            raise Exception("User Exit")
+        x, y, _ = result
         return x, y
 
     def remember(self, state: Board, next_state: Board, action, reward, is_done):

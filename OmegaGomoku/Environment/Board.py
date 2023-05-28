@@ -2,7 +2,8 @@
 五子棋棋盘
 """
 import numpy as np
-from ..Enums import Player
+from ..Enums import Player, TermColor
+from colorama import Fore, Back, Style
 
 """
    def get_pieces_connected(self, player, x, y):
@@ -64,14 +65,16 @@ def get_lines_to_check(board: np.ndarray, x, y, pattern_len) -> np.ndarray:
         lines.append(board[x, i:i + pattern_len])
     # 对角线
     diag_k = y - x
-    diag_s = min(x, y)
+    # diag_s = min(x, y)
+    # diag_s = x
+    diag_s = x if diag_k >= 0 else y
     diag = board.diagonal(diag_k)
     start_i = max(0, diag_s - pattern_len + 1)
     end_i = min(len(diag) - pattern_len + 1, diag_s + 1)
     for i in range(start_i, end_i):
         lines.append(diag[i:i + pattern_len])
     # 斜对角线
-    anti_diag = np.diag(np.fliplr(board), board_size - y - x - 1)[::-1]
+    anti_diag = np.diag(np.fliplr(board), board_size - y - x - 1)
     start_i = max(0, diag_s - pattern_len + 1)
     end_i = min(len(anti_diag) - pattern_len + 1, diag_s + 1)
     for i in range(start_i, end_i):
@@ -86,9 +89,9 @@ class Board:
         'H4': [[0, 1, 1, 1, 1, 0]],  # 活四，即两个点可以成连五
         'C4': [[0, 1, 1, 1, 1], [1, 0, 1, 1, 1], [1, 1, 0, 1, 1]],  # 冲四，仅有一个点可以连五
         'H3': [[0, 1, 1, 1, 0, 0], [0, 1, 0, 1, 1, 0]],  # 活三，能形成活四的三
-        'M3': [[1, 1, 1, 0], [0, 1, 0, 1, 1], [0, 1, 1, 0, 1]],  # 眠三，只能形成冲四的三
-        'H2': [[0, 1, 1, 0, 0], [0, 1, 0, 1, 0]],  # 活二，能形成活三的二
-        'M2': [[0, 1, 1], [0, 1, 0, 1], [1, 0, 0, 1]]  # 眠二，能形成眠三的二
+        'M3': [[1, 1, 1, 0, 0], [0, 1, 0, 1, 1], [0, 1, 1, 0, 1]],  # 眠三，只能形成冲四的三
+        'H2': [[0, 0, 1, 1, 0, 0], [0, 1, 1, 0, 0, 0], [0, 1, 0, 1, 0, 0]],  # 活二，能形成活三的二
+        'M2': [[0, 0, 0, 1, 1], [0, 0, 1, 0, 1], [0, 0, 1, 1, 0], [0, 1, 0, 0, 1]]  # 眠二，能形成眠三的二
     }
     PATTERNS_FLATTEN = [item for sub in PATTERNS.values() for item in sub]
     PATTERN_LENS = set(map(len, PATTERNS_FLATTEN))
@@ -125,6 +128,9 @@ class Board:
     def is_done(self):
         return self.steps == self.board_size ** 2
 
+    def is_empty(self):
+        return self.steps == 0
+
     def get_valid_moves(self) -> np.ndarray:
         """
         获取当前有效的落子区域，一个Mask，-inf代表不可落子，1代表可以落子
@@ -136,7 +142,7 @@ class Board:
         valid_moves[valid_moves == np.inf] = 1
         return valid_moves[0] * valid_moves[1]
 
-    def get_suggested_moves(self, player) -> np.ndarray:
+    def get_suggested_moves(self, player, extend=1) -> np.ndarray:
         """
         获取当前建议的落子区域，一个Mask，-inf代表不建议落子，1代表建议落子。
         建议的落子区域为当前棋盘上有子存在的矩形外围一格
@@ -147,10 +153,10 @@ class Board:
         pieces = np.argwhere(self.get_valid_moves() == -np.inf)
         min_x, min_y = pieces.min(axis=0)
         max_x, max_y = pieces.max(axis=0)
-        min_x = max(0, min_x - 1)
-        min_y = max(0, min_y - 1)
-        max_x = min(self.board_size, max_x + 2)
-        max_y = min(self.board_size, max_y + 2)
+        min_x = max(0, min_x - extend)
+        min_y = max(0, min_y - extend)
+        max_x = min(self.board_size, max_x + extend + 1)
+        max_y = min(self.board_size, max_y + extend + 1)
         suggested_moves = np.zeros((self.board_size, self.board_size))
         suggested_moves[min_x:max_x, min_y:max_y] = 1
         suggested_moves[suggested_moves == 0] = -np.inf
@@ -161,6 +167,7 @@ class Board:
         落子在x, y时产生的最佳棋形
         """
         # TODO: 考虑一下把所有形成的棋形纳入考虑以使AI形成组合棋形
+        # print(f"Find pattern when put {x},{y} as {player}")
         board = self.board[player - 1]
         is_a_attempt = board[x, y] == 0
         if is_a_attempt:
@@ -170,6 +177,7 @@ class Board:
             lines = get_lines_to_check(board, x, y, pattern_len)
             to_check_lines[pattern_len] = lines
 
+        # 优化一下，根据line里面1的数量决定判断哪一个pattern
         for pattern_key, pattern_list in self.PATTERNS.items():
             for pattern in pattern_list:
                 pattern_len = len(pattern)
@@ -184,19 +192,26 @@ class Board:
         return None
 
     @staticmethod
-    def beautify_board(board: np.ndarray, mask_mode=False, number_mode=False) -> str:
-        result = '    ' + ' '.join(map(str, range(board.shape[0]))) + '\n'
+    def beautify_board(board: np.ndarray, mask_mode=False, number_mode=False, space=' ') -> str:
+        result = '    ' + Fore.LIGHTBLUE_EX + space.join(map(str, range(board.shape[0]))) + Style.RESET_ALL + '\n'
         i = 0
+
+        def get_symbol(i):
+            non = Fore.WHITE + Style.BRIGHT + '.' + Style.RESET_ALL
+            cross = TermColor.BOLD + Fore.RED + Style.BRIGHT + 'X' + Style.RESET_ALL
+            circle = TermColor.BOLD + Fore.GREEN + Style.BRIGHT + 'O' + Style.RESET_ALL
+            if mask_mode:
+                return cross if i == -np.inf else circle if y == 1 else non
+            elif number_mode:
+                return str(i)
+            else:
+                return {'.': non, 'X': cross, 'O': circle}[Player.PlayerSymbol(i)]
+
         for x in board.transpose((1, 0)):
-            result += '{:<4d}'.format(i)
+            result += Fore.LIGHTBLUE_EX + '{:<4d}'.format(i) + Style.RESET_ALL
             i += 1
             for y in x:
-                if mask_mode:
-                    result += ('X' if y == -np.inf else 'O' if y == 1 else '.') + ' '
-                elif number_mode:
-                    result += f"{y} "
-                else:
-                    result += f"{Player.PlayerSymbol(y)} "
+                result += get_symbol(y) + space
             result += "\n"
         return result
 

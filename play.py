@@ -46,16 +46,23 @@ while not quit:
     done = False
     steps = 0
     terminal_status = 0
-    while not done:
-        steps += 1
-        # 先手，AI智能体
-        player = env.current_player
-        action = agent.act(board, player)
-        board, reward, terminal_status = env.step(action)
-        done = terminal_status is not None
-
     try:
-        msgbox.showinfo("游戏结束",
-                        "AI获胜" if terminal_status == 1 else "人类获胜" if terminal_status == -1 else "平局")
-    except:
-        pass
+        while not done:
+            steps += 1
+            # 先手，AI智能体
+            player = env.current_player
+            action = agent.act(board, player)
+            board, reward, terminal_status = env.step(action)
+            done = terminal_status is not None
+
+        try:
+            msgbox.showinfo("游戏结束",
+                            "AI获胜" if terminal_status == 1 else "人类获胜" if terminal_status == -1 else "平局")
+        except Exception as e:
+            print(e)
+    except Exception as e:
+        if str(e) == "User Exit":
+            quit = True
+            print("Bye.")
+        else:
+            print(e)

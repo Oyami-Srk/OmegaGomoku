@@ -32,18 +32,21 @@ class DQN(BaseDQN):
 
     def act(self, board: Board, player):
         valid_moves = board.get_valid_moves().reshape(self.action_size)
-        suggested_moves = board.get_suggested_moves(player).reshape(self.action_size)
+        suggested_moves = board.get_suggested_moves(player, extend=3).reshape(self.action_size)
         if self.training:
             valid_moves *= suggested_moves  # Let valid moves only in suggested moves
+        if board.is_empty():
+            # 如果棋盘为空，在棋盘中心的5x5区域随机选取一个点位下棋
+            round_size = 5
+            board_size = board.board_size
+            round_arr = np.full((board_size, board_size), -np.inf)
+            s = (board_size - round_size) // 2
+            round_arr[s:s + round_size, s:s + round_size] = 1
+            round_arr = round_arr.reshape(self.action_size)
+            valid_moves *= round_arr
         state = board.get_state()
-        if self.training and np.random.rand() <= self.hyperparameters.epsilon:
-            # Do Random
-            """
-            action_values = np.random.uniform(-1, 1, size=self.action_size)
-            valid_values = np.where(valid_moves == 1, action_values, -np.inf)
-            return np.argmax(valid_values)
-            """
-            # Do fast chose
+        if board.is_empty() or self.training and np.random.rand() <= self.hyperparameters.epsilon:
+            # Do epsilon choose
             atk2, atk3, atk4, atk5 = Utils.gen_dfs_atk_moves(state, True)
             def3, def4 = Utils.gen_dfs_atk_moves(state, False)
             pool = None

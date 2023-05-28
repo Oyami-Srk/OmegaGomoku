@@ -17,3 +17,15 @@ class GameType:
     PLAYER_VS_AI = 1  # 人机对弈模式
     AI_VS_AI = 2  # AI自对弈模式
     PLAYER_VS_PLAYER = 3
+
+
+class TermColor:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'

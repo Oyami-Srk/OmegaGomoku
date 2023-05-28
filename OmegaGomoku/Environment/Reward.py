@@ -26,8 +26,9 @@ def calculate_reward(pattern: str | None,
     if rival_pattern is not None:
         # 对手形成了棋形
         rival_reward = PATTERNS_REWARD[rival_pattern]
-        reward -= rival_reward * (0.5 if rival_reward <= reward else 2)
+        reward -= rival_reward * (0.5 if rival_reward <= reward else 2 if rival_reward <= 60 else 3)
     if break_pattern is not None:
         # 打破了对手的棋形
-        reward += PATTERNS_REWARD[break_pattern] * 0.8
+        assume_reward = PATTERNS_REWARD[break_pattern]
+        reward += assume_reward * (0.5 if assume_reward <= 20 else 1 if assume_reward <= 60 else 3)
     return reward

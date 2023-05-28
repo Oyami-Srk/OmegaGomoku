@@ -105,14 +105,20 @@ class SelfPlayTrainer:
                         win_rate, draw_rate, avg_steps, avg_rewards = evaluate_win_rate(
                             self.env.create_eval(),
                             self.agent.create_eval(),
-                            rounds=50
+                            rounds=20  # 神经网络对于MiniMax这种没有随机性的算法总会产生一样的输出，但我们起手是随机的
                         )
+                        """
+                        tqdm.write(
+                            f"Evaluation at Episodes {e} Got: " +
+                            f"Win Rate={win_rate}; Draw Rate={draw_rate}; " +
+                            f"Avg Steps={avg_steps}; Avg Rewards={avg_rewards}")
+                            """
                         end_time = time.time()
                         # self.writer.add_scalar('Train/WinRate', win_rate, e)
                         self.writer.add_scalars('Train/Evaluations/Rate', {
                             'Win Rate': win_rate,
                             'Draw Rate': draw_rate,
-                            'Loss Rate': 1 - draw_rate - win_rate,
+                            'Loss Rate': 1.0 - draw_rate - win_rate,
                         }, e)
                         self.writer.add_scalar('Train/Evaluations/Avg Steps', avg_steps, e)
                         self.writer.add_scalar('Train/Evaluations/Avg Rewards', avg_rewards, e)

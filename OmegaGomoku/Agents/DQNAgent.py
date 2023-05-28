@@ -60,6 +60,7 @@ class DQNAgent(BaseAgent):
             cuda=self.dqn.cuda,
             training=False
         )
+        dqn.load_checkpoint(self.dqn.make_checkpoint())
         return DQNAgent(
             deep_q_network=dqn,
             writer=None,
