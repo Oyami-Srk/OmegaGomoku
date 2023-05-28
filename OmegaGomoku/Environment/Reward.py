@@ -10,6 +10,11 @@ PATTERNS_REWARD = {
     'M2': 5
 }
 
+PATTERNS_GAMMA = {
+    'rival': [0.5, 2, 3],
+    'break': [0.5, 1, 3]
+}
+
 
 def calculate_reward(pattern: str | None,
                      break_pattern: str | None,
@@ -26,9 +31,15 @@ def calculate_reward(pattern: str | None,
     if rival_pattern is not None:
         # 对手形成了棋形
         rival_reward = PATTERNS_REWARD[rival_pattern]
-        reward -= rival_reward * (0.5 if rival_reward <= reward else 2 if rival_reward <= 60 else 3)
+        reward -= rival_reward * (
+            PATTERNS_GAMMA['rival'][0] if rival_reward <= reward
+            else PATTERNS_GAMMA['rival'][1] if rival_reward <= 60
+            else PATTERNS_GAMMA['rival'][2])
     if break_pattern is not None:
         # 打破了对手的棋形
         assume_reward = PATTERNS_REWARD[break_pattern]
-        reward += assume_reward * (0.5 if assume_reward <= 20 else 1 if assume_reward <= 60 else 3)
+        reward += assume_reward * (
+            PATTERNS_GAMMA['break'][0] if assume_reward <= 20
+            else PATTERNS_GAMMA['break'][1] if assume_reward <= 60
+            else PATTERNS_GAMMA['break'][2])
     return reward

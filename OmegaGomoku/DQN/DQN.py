@@ -73,8 +73,7 @@ class DQN(BaseDQN):
         # Do Think
         state = state.reshape([2, self.board_size, self.board_size])
         state = state[np.newaxis, :, :]
-        # state = torch.from_numpy(state).float().unsqueeze(0).to('cuda' if self.cuda else 'cpu')
-        state = torch.from_numpy(state).float().to('cuda' if self.cuda else 'cpu')
+        state = torch.from_numpy(state).float().to(self.device)
         # print(state, state.size())
         with torch.no_grad():
             # 不需要梯度
