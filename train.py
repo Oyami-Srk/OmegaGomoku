@@ -11,7 +11,7 @@ from tensorboardX import SummaryWriter
 
 board_size = 7
 win_size = 5
-target_episode = 50000
+target_episode = 100000
 model_dir = "models"
 
 """
@@ -22,15 +22,15 @@ batch_size=256, memory_size=20000, learning_rate=1e-06, gamma=0.65, epsilon=1.0,
 hyperparameters = Hyperparameters(
     batch_size=256,
     memory_size=100000,  # 记忆空间大小
-    learning_rate=1e-4,  # 学习率
-    gamma=0.60,  # 奖励折扣因子，越高的话智能体会倾向于长期价值
+    learning_rate=1e-5,  # 学习率
+    gamma=0.70,  # 奖励折扣因子，越高的话智能体会倾向于长期价值
     epsilon_min=0.10,  # 最小探索率
     epsilon_max=1.00,  # 最大探索率
-    epsilon_decay_rate_exp=2000,  # 探索率指数衰减参数，越高越慢，e = e_min + (e_max - e_min) * exp(-1.0 * episode / rate)
+    epsilon_decay_rate_exp=1500,  # 探索率指数衰减参数，越高越慢，e = e_min + (e_max - e_min) * exp(-1.0 * episode / rate)
     update_target_model_each_iter=200,  # 每学习N次更新Target模型
     # train_epochs=20,
-    # train_epochs=2,
-    train_epochs=8,
+    train_epochs=2,
+    # train_epochs=8,
     loss='SmoothL1Loss',
     optimizer='AdamW'
 )
